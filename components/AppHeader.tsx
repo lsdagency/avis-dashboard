@@ -14,11 +14,13 @@ export default function AppHeader({
     <header className="sticky top-0 z-10 border-b border-avis-grey bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <div className="flex items-center gap-5">
-          <Link
-            href="/dashboard"
-            className="font-display text-xl font-bold text-avis-red"
-          >
-            Avis Budget Group
+          <Link href="/dashboard" className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/avis-logo.svg"
+              alt="Avis Budget Group"
+              className="h-6 w-auto"
+            />
           </Link>
           <nav className="hidden items-center gap-4 text-sm text-black/60 sm:flex">
             <Link

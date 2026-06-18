@@ -14,8 +14,9 @@ export default async function LoginPage() {
         <div className="mb-6 h-2 w-full rounded-full bg-avis-red" />
 
         <div className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
-          <h1 className="text-4xl text-avis-red">Avis Budget Group</h1>
-          <p className="mt-1 text-black/60">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/avis-logo.svg" alt="Avis Budget Group" className="h-10 w-auto" />
+          <p className="mt-3 text-black/60">
             Live Reporting · Meta · Reddit · TikTok
           </p>
 

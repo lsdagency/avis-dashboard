@@ -36,7 +36,9 @@ export async function middleware(req: NextRequest) {
   return NextResponse.redirect(url);
 }
 
-// Run on everything except static assets.
+// Run on everything except static assets (Next internals + files in /public).
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|svg|jpg|jpeg|gif|webp|ico|woff2?)$).*)",
+  ],
 };
