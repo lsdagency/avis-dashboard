@@ -73,14 +73,6 @@ export interface PlatformApiStatus {
   error?: string;
 }
 
-// Plain-English daily summary shown at the top of the dashboard (computed locally).
-export interface BudgetSummary {
-  headline: string;
-  topPerformer: string;
-  floorNote: string;
-  recommendation: string;
-}
-
 // The full payload the dashboard consumes for a given date.
 export interface DashboardData {
   date: string; // YYYY-MM-DD
@@ -89,7 +81,6 @@ export interface DashboardData {
   recommendations: BudgetRecommendation[];
   byPlatform: PlatformSummary[];
   summary: DashboardSummary;
-  dailySummary: BudgetSummary;
   appliedToday: boolean;
 }
 

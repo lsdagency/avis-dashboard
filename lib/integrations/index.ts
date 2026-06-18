@@ -2,7 +2,6 @@ import { and, eq, sql } from "drizzle-orm";
 import { db, dbAvailable, schema } from "../db";
 import { resolveEnv } from "../credentials";
 import { calculateRecommendations } from "../budget-engine";
-import { buildSummary } from "../summary";
 import {
   PLATFORMS,
   type BudgetRecommendation,
@@ -344,7 +343,6 @@ export async function getDashboardData(
     recommendations,
     byPlatform,
     summary,
-    dailySummary: buildSummary(recommendations, byPlatform),
     appliedToday: await appliedToday(date),
   };
 }
