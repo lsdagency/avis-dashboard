@@ -58,7 +58,7 @@ export default function AppHeader({
               isAdmin ? "bg-avis-red text-white" : "bg-avis-grey text-black/70"
             }`}
           >
-            {isAdmin ? "LSD Agency" : "Avis team"}
+            {isAdmin ? "Admin" : "Avis team"}
           </span>
           <span className="hidden text-sm text-black/60 lg:inline">
             {session.email}

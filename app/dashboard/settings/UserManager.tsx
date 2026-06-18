@@ -84,7 +84,7 @@ export default function UserManager({
                     u.role === "admin" ? "bg-avis-red text-white" : "bg-avis-grey"
                   }`}
                 >
-                  {u.role === "admin" ? "LSD Agency" : "Avis team"}
+                  {u.role === "admin" ? "Admin" : "Avis team"}
                 </span>
               </td>
               <td className="px-3 py-2 text-right">
@@ -126,7 +126,7 @@ export default function UserManager({
           className="rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:border-avis-red"
         >
           <option value="client">Avis team (client)</option>
-          <option value="admin">LSD Agency (admin)</option>
+          <option value="admin">Admin</option>
         </select>
         <input
           required

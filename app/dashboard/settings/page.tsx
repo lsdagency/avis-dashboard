@@ -50,8 +50,8 @@ export default async function SettingsPage() {
         <section>
           <h2 className="font-display text-xl font-bold">Dashboard users</h2>
           <p className="mt-1 text-sm text-black/60">
-            Admins (LSD Agency) can push budgets and refresh. Clients (Avis team)
-            are view-only.
+            Admins can push budgets and refresh. Clients (Avis team) are
+            view-only.
           </p>
           <div className="mt-4">
             <UserManager initialUsers={users} currentEmail={session.email} />
