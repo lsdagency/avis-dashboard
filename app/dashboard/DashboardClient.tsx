@@ -7,7 +7,6 @@ import type { DashboardData, UserRole } from "@/lib/types";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import PlatformStatusBadges from "@/components/dashboard/PlatformStatusBadges";
 import CampaignTable from "@/components/dashboard/CampaignTable";
-import RecommendationLegend from "@/components/dashboard/RecommendationLegend";
 import PushBudgetsButton from "@/components/dashboard/PushBudgetsButton";
 import Toast, { type ToastMessage } from "@/components/ui/Toast";
 
@@ -144,7 +143,6 @@ export default function DashboardClient({
       <SummaryCards summary={view.summary} />
       <PlatformStatusBadges byPlatform={view.byPlatform} />
       <CampaignTable recommendations={view.recommendations} />
-      <RecommendationLegend />
 
       <Toast message={toast} onDismiss={() => setToast(null)} />
     </main>
