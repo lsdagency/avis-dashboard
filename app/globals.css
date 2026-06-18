@@ -1,3 +1,5 @@
+/* Futura PT — served via Adobe Fonts (Typekit) web project. */
+@import url("https://use.typekit.net/vex3ncc.css");
 @import "tailwindcss";
 
 /* Avis Budget Group brand design tokens — exposed to Tailwind as utilities
@@ -13,31 +15,12 @@
   --color-avis-red-soft: #fde8ec;
   --color-positive-soft: #e4f3ea;
 
-  /* Font: Futura is commercial — falls back to Century Gothic / Trebuchet MS.
-     Drop Futura-Medium.woff2 / Futura-Bold.woff2 into /public/fonts and add
-     @font-face rules below to use the real face. */
-  --font-sans: "Futura", "Century Gothic", "Trebuchet MS", ui-sans-serif,
+  /* Futura PT via Adobe Fonts; Century Gothic / Trebuchet MS as graceful fallbacks. */
+  --font-sans: "futura-pt", "Century Gothic", "Trebuchet MS", ui-sans-serif,
     system-ui, sans-serif;
-  --font-display: "Futura", "Century Gothic", "Trebuchet MS", ui-sans-serif,
+  --font-display: "futura-pt", "Century Gothic", "Trebuchet MS", ui-sans-serif,
     system-ui, sans-serif;
 }
-
-/*
-  If the user supplies Futura web fonts, uncomment and point these at the files:
-
-  @font-face {
-    font-family: "Futura";
-    src: url("/fonts/Futura-Medium.woff2") format("woff2");
-    font-weight: 400 500;
-    font-display: swap;
-  }
-  @font-face {
-    font-family: "Futura";
-    src: url("/fonts/Futura-Bold.woff2") format("woff2");
-    font-weight: 700;
-    font-display: swap;
-  }
-*/
 
 html,
 body {
