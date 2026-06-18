@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* Avis Budget Group brand design tokens — exposed to Tailwind as utilities
+   (bg-avis-red, text-avis-grey, text-positive, etc.) */
+@theme {
+  --color-avis-red: #d5002b;
+  --color-avis-grey: #f1f1f1;
+  --color-avis-ink: #1a1a1a;
+  --color-positive: #1a7f3c;
+  --color-negative: #d5002b;
+
+  /* Soft tints for surfaces built from the brand colours */
+  --color-avis-red-soft: #fde8ec;
+  --color-positive-soft: #e4f3ea;
+
+  /* Font: Futura is commercial — falls back to Century Gothic / Trebuchet MS.
+     Drop Futura-Medium.woff2 / Futura-Bold.woff2 into /public/fonts and add
+     @font-face rules below to use the real face. */
+  --font-sans: "Futura", "Century Gothic", "Trebuchet MS", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-display: "Futura", "Century Gothic", "Trebuchet MS", ui-sans-serif,
+    system-ui, sans-serif;
+}
+
+/*
+  If the user supplies Futura web fonts, uncomment and point these at the files:
+
+  @font-face {
+    font-family: "Futura";
+    src: url("/fonts/Futura-Medium.woff2") format("woff2");
+    font-weight: 400 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Futura";
+    src: url("/fonts/Futura-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-display: swap;
+  }
+*/
+
+html,
+body {
+  background: var(--color-avis-grey);
+  color: var(--color-avis-ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
