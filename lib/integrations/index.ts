@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db, dbAvailable, schema } from "../db";
 import { resolveEnv } from "../credentials";
 import { calculateRecommendations } from "../budget-engine";
-import { generateSummary, heuristicSummary } from "../ai-summary";
+import { buildSummary } from "../summary";
 import {
   PLATFORMS,
   type BudgetRecommendation,
@@ -325,8 +325,7 @@ async function persist(date: string, recs: BudgetRecommendation[]) {
 
 /**
  * Full dashboard payload for a date. Always works — sample data fills any
- * platform without live credentials. Claude summary only on refresh; otherwise
- * the instant heuristic summary.
+ * platform without live credentials.
  */
 export async function getDashboardData(
   date: string,
@@ -338,10 +337,6 @@ export async function getDashboardData(
 
   if (refresh) await persist(date, recommendations);
 
-  const aiSummary = refresh
-    ? await generateSummary(recommendations, byPlatform, env)
-    : heuristicSummary(recommendations, byPlatform);
-
   return {
     date,
     generatedAt: new Date().toISOString(),
@@ -349,7 +344,7 @@ export async function getDashboardData(
     recommendations,
     byPlatform,
     summary,
-    aiSummary,
+    dailySummary: buildSummary(recommendations, byPlatform),
     appliedToday: await appliedToday(date),
   };
 }
@@ -422,7 +417,7 @@ export async function pushBudgets(
   return { applied, failed, errors, byPlatform };
 }
 
-/** Refresh: pull all platforms, recompute, persist, regenerate Claude summary. */
+/** Refresh: pull all platforms, recompute, persist. */
 export async function runRefresh(date: string): Promise<DashboardData> {
   return getDashboardData(date, { refresh: true });
 }

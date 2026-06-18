@@ -12,7 +12,6 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.65.0",
     "@neondatabase/serverless": "^1.0.1",
     "@netlify/database": "^1.0.0",
     "bcryptjs": "^3.0.2",
@@ -22,7 +21,6 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "recharts": "^3.2.1",
-    "resend": "^6.1.2",
     "swr": "^2.3.6",
     "zod": "^4.1.11"
   },

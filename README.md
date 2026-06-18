@@ -13,7 +13,6 @@ Built on the LSD Agency house stack (same as the PHYT dashboard).
 - **Tailwind CSS v4** (CSS-first `@theme` tokens), Avis brand colours
 - **Neon serverless Postgres** via `@netlify/database` (auto-provisioned on Netlify) + **Drizzle ORM**
 - **Auth:** custom JWT (`jose`, HS256, httpOnly cookie) + `bcryptjs`, two roles (`admin` / `client`), enforced by Edge middleware
-- **AI:** Anthropic SDK, Claude with forced tool use (`claude-sonnet-4-6`) for the daily budget summary, with a deterministic heuristic fallback
 - **Client fetching:** SWR (5-min auto-refresh)
 - **Scheduling:** Netlify Scheduled Function (`netlify/functions/daily-refresh.mts`), 09:00 UTC, protected by `CRON_SECRET`
 - **Hosting:** Netlify (`@netlify/plugin-nextjs`), deployed from GitHub
@@ -65,8 +64,8 @@ Names that don't match the pattern are skipped.
    `netlify/database/migrations/0001_init/migration.sql` on deploy.
 3. Set environment variables (see `.env.example`): `JWT_SECRET`, `CREDENTIALS_SECRET`,
    `ADMIN_EMAIL`/`ADMIN_PASSWORD`, `CLIENT_EMAIL`/`CLIENT_PASSWORD`, `CRON_SECRET`,
-   `APP_URL`, and any live platform / Anthropic / Resend keys (all optional —
-   sample data is used until they're set; keys can also be entered in-app under Settings).
+   `APP_URL`, and any live platform keys (all optional — sample data is used
+   until they're set; keys can also be entered in-app under Settings).
 
 `DATABASE_URL` is **not** needed on Netlify — it's auto-provisioned. Set it only for
 local dev against your own Neon instance.

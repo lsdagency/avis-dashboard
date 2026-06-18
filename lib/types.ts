@@ -73,14 +73,12 @@ export interface PlatformApiStatus {
   error?: string;
 }
 
-// AI (or heuristic) daily summary shown at the top of the dashboard.
+// Plain-English daily summary shown at the top of the dashboard (computed locally).
 export interface BudgetSummary {
   headline: string;
   topPerformer: string;
   floorNote: string;
   recommendation: string;
-  generatedBy: "claude" | "heuristic";
-  model?: string;
 }
 
 // The full payload the dashboard consumes for a given date.
@@ -91,7 +89,7 @@ export interface DashboardData {
   recommendations: BudgetRecommendation[];
   byPlatform: PlatformSummary[];
   summary: DashboardSummary;
-  aiSummary: BudgetSummary;
+  dailySummary: BudgetSummary;
   appliedToday: boolean;
 }
 

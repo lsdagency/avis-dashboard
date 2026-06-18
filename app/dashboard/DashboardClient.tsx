@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import type { DashboardData, UserRole } from "@/lib/types";
-import AiSummaryCard from "@/components/dashboard/AiSummaryCard";
+import DailySummaryCard from "@/components/dashboard/DailySummaryCard";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import PlatformStatusBadges from "@/components/dashboard/PlatformStatusBadges";
 import CampaignTable from "@/components/dashboard/CampaignTable";
@@ -142,7 +142,7 @@ export default function DashboardClient({
         </div>
       )}
 
-      <AiSummaryCard summary={view.aiSummary} />
+      <DailySummaryCard summary={view.dailySummary} />
       <SummaryCards summary={view.summary} />
       <PlatformStatusBadges byPlatform={view.byPlatform} />
       <CampaignTable recommendations={view.recommendations} />

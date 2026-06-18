@@ -56,35 +56,10 @@ export const CREDENTIAL_GROUPS: CredGroup[] = [
       { key: "TIKTOK_ACCESS_TOKEN", label: "Access token", secret: true },
     ],
   },
-  {
-    provider: "anthropic",
-    title: "Claude (Anthropic)",
-    hint: "Powers the plain-English daily budget summary. Create an API key in the Anthropic Console. A heuristic summary is used when this is absent.",
-    docUrl: "https://console.anthropic.com/settings/keys",
-    docLabel: "Anthropic Console → API Keys",
-    fields: [
-      { key: "ANTHROPIC_API_KEY", label: "API key", secret: true },
-      { key: "ANTHROPIC_MODEL", label: "Model (optional)", secret: false, placeholder: "claude-sonnet-4-6" },
-    ],
-  },
-  {
-    provider: "resend",
-    title: "Email (Resend)",
-    hint: "Verify a sending domain, then create an API key. Send from an address on the verified domain.",
-    docUrl: "https://resend.com/docs/dashboard/api-keys/introduction",
-    docLabel: "Resend API keys & domain setup",
-    fields: [
-      { key: "RESEND_API_KEY", label: "API key", secret: true },
-      { key: "RESEND_FROM", label: "From address", secret: false, placeholder: "reports@lsdagency.co.uk" },
-    ],
-  },
 ];
 
 // Fields that are optional and shouldn't block a "Connected" status.
-export const OPTIONAL_KEYS = new Set([
-  "ANTHROPIC_MODEL",
-  "REDDIT_ACCESS_TOKEN",
-]);
+export const OPTIONAL_KEYS = new Set(["REDDIT_ACCESS_TOKEN"]);
 
 const ALL_FIELDS = CREDENTIAL_GROUPS.flatMap((g) => g.fields);
 export const ALL_KEYS = ALL_FIELDS.map((f) => f.key);

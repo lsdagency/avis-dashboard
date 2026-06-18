@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/guard";
 import { runRefresh, parseDate } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // platform pulls + Claude can take a few seconds
+export const maxDuration = 60; // platform pulls can take a few seconds
 
 /** Pull all three platforms, recalc per-platform recommendations, upsert. Admin only. */
 export async function POST(req: Request) {
