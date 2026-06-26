@@ -8,19 +8,42 @@ import {
   setZ1Multiplier,
   MIN_Z1_MULTIPLIER,
   MAX_Z1_MULTIPLIER,
+  getMonthlyBudget,
+  setMonthlyBudget,
+  getPacingStance,
+  setPacingStance,
+  getMtdOverride,
+  setMtdOverride,
+  MAX_PACING_STANCE,
 } from "@/lib/settings";
+import { monthToDateSpend, todayInTz } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 
 async function currentConfig() {
-  const [prospectingFloor, z1Multiplier] = await Promise.all([
-    getProspectingFloor(),
-    getZ1Multiplier(),
-  ]);
-  return { prospectingFloor, z1Multiplier };
+  const today = todayInTz();
+  const month = today.slice(0, 7);
+  const [prospectingFloor, z1Multiplier, monthlyBudget, pacingStance, mtdOverride, mtdAuto] =
+    await Promise.all([
+      getProspectingFloor(),
+      getZ1Multiplier(),
+      getMonthlyBudget(),
+      getPacingStance(),
+      getMtdOverride(month),
+      monthToDateSpend(today),
+    ]);
+  return {
+    prospectingFloor,
+    z1Multiplier,
+    monthlyBudget,
+    pacingStance,
+    mtdOverride, // number | null
+    mtdAuto, // tracked spend so far this month (placeholder for the override)
+    month,
+  };
 }
 
-/** Budget-engine config for the Settings UI. Admin only. */
+/** Budget-engine + pacing config for the Settings UI. Admin only. */
 export async function GET() {
   const gate = await requireAdmin();
   if ("response" in gate) return gate.response;
@@ -29,11 +52,14 @@ export async function GET() {
 
 const Body = z
   .object({
-    // 0–0.9 fraction (UI sends a fraction, e.g. 0.5 for 50%).
     prospectingFloor: z.number().min(0).max(0.9).optional(),
     z1Multiplier: z.number().min(MIN_Z1_MULTIPLIER).max(MAX_Z1_MULTIPLIER).optional(),
+    monthlyBudget: z.number().min(0).max(100_000_000).optional(),
+    pacingStance: z.number().min(-MAX_PACING_STANCE).max(MAX_PACING_STANCE).optional(),
+    // null clears the override (falls back to tracked spend).
+    mtdOverride: z.number().min(0).nullable().optional(),
   })
-  .refine((b) => b.prospectingFloor !== undefined || b.z1Multiplier !== undefined, {
+  .refine((b) => Object.values(b).some((v) => v !== undefined), {
     message: "Nothing to update",
   });
 
@@ -44,11 +70,13 @@ export async function PUT(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  if (parsed.data.prospectingFloor !== undefined) {
-    await setProspectingFloor(parsed.data.prospectingFloor);
-  }
-  if (parsed.data.z1Multiplier !== undefined) {
-    await setZ1Multiplier(parsed.data.z1Multiplier);
+  const b = parsed.data;
+  if (b.prospectingFloor !== undefined) await setProspectingFloor(b.prospectingFloor);
+  if (b.z1Multiplier !== undefined) await setZ1Multiplier(b.z1Multiplier);
+  if (b.monthlyBudget !== undefined) await setMonthlyBudget(b.monthlyBudget);
+  if (b.pacingStance !== undefined) await setPacingStance(b.pacingStance);
+  if (b.mtdOverride !== undefined) {
+    await setMtdOverride(todayInTz().slice(0, 7), b.mtdOverride);
   }
   return NextResponse.json({ ok: true, ...(await currentConfig()) });
 }

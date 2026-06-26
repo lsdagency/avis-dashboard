@@ -1,14 +1,22 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { db, dbAvailable, schema } from "../db";
 import { resolveEnv } from "../credentials";
 import { calculateRecommendations } from "../budget-engine";
-import { getProspectingFloor, getZ1Multiplier } from "../settings";
+import {
+  getProspectingFloor,
+  getZ1Multiplier,
+  getMonthlyBudget,
+  getPacingStance,
+  getMtdOverride,
+} from "../settings";
+import { computePacing } from "../pacing";
 import {
   PLATFORMS,
   type BudgetRecommendation,
   type CampaignSnapshot,
   type DashboardData,
   type DashboardSummary,
+  type PacingSummary,
   type Platform,
   type PlatformSummary,
 } from "../types";
@@ -205,7 +213,28 @@ function rollup(byPlatform: PlatformSummary[]): DashboardSummary {
   };
 }
 
-/** Compute recommendations + summaries for a date. Per-platform isolation. */
+/** Sum of recorded daily spend for the month before `date` (completed days only). */
+export async function monthToDateSpend(date: string): Promise<number> {
+  if (!dbAvailable || !db) return 0;
+  const firstOfMonth = `${date.slice(0, 7)}-01`;
+  const prevDay = new Date(date + "T00:00:00Z");
+  prevDay.setUTCDate(prevDay.getUTCDate() - 1);
+  const prev = prevDay.toISOString().slice(0, 10);
+  if (prev < firstOfMonth) return 0; // it's the 1st — nothing completed yet
+
+  const rows = await db
+    .select({ total: sql<string>`coalesce(sum(${schema.campaignSnapshots.spend}), 0)` })
+    .from(schema.campaignSnapshots)
+    .where(
+      and(
+        gte(schema.campaignSnapshots.snapshotDate, firstOfMonth),
+        lte(schema.campaignSnapshots.snapshotDate, prev),
+      ),
+    );
+  return Number(rows[0]?.total ?? 0);
+}
+
+/** Compute recommendations + summaries + pacing for a date. Per-platform isolation. */
 async function compute(
   date: string,
   env: Record<string, string | undefined>,
@@ -214,26 +243,74 @@ async function compute(
   recommendations: BudgetRecommendation[];
   byPlatform: PlatformSummary[];
   summary: DashboardSummary;
+  pacing: PacingSummary;
 }> {
-  const [results, prospectingFloor, z1Multiplier] = await Promise.all([
-    fetchAllPlatforms(date, env, refresh),
-    getProspectingFloor(),
-    getZ1Multiplier(),
-  ]);
+  const month = date.slice(0, 7);
+  const [results, prospectingFloor, z1Multiplier, monthlyBudget, stancePct, override, storedMtd] =
+    await Promise.all([
+      fetchAllPlatforms(date, env, refresh),
+      getProspectingFloor(),
+      getZ1Multiplier(),
+      getMonthlyBudget(),
+      getPacingStance(),
+      getMtdOverride(month),
+      monthToDateSpend(date),
+    ]);
+
+  // Current daily run rate = sum of every platform's current daily budgets.
+  const currentByPlatform = results.map((meta) => ({
+    meta,
+    current: meta.snapshots.reduce((a, s) => a + s.currentBudget, 0),
+  }));
+  const totalCurrent = currentByPlatform.reduce((a, p) => a + p.current, 0);
+
+  // Month-to-date spend: override wins; else stored (DB); else an estimate from
+  // the current run rate so the demo/no-DB experience isn't blank.
+  const dayOfMonth = Number(date.slice(8, 10));
+  let mtdSpend: number;
+  let mtdSource: PacingSummary["mtdSource"];
+  if (override != null) {
+    mtdSpend = override;
+    mtdSource = "override";
+  } else if (dbAvailable) {
+    mtdSpend = storedMtd;
+    mtdSource = "stored";
+  } else {
+    mtdSpend = totalCurrent * Math.max(0, dayOfMonth - 1);
+    mtdSource = "estimated";
+  }
+
+  const pacing = computePacing({
+    date,
+    monthlyBudget,
+    mtdSpend,
+    mtdSource,
+    currentDailyRunRate: totalCurrent,
+    stancePct,
+  });
+
   const recommendations: BudgetRecommendation[] = [];
   const byPlatform: PlatformSummary[] = [];
 
-  for (const meta of results) {
+  for (const { meta, current } of currentByPlatform) {
+    // When pacing is active, today's total pool is split across platforms by
+    // their current share, then reweighted within each platform by performance.
+    const targetPool =
+      pacing.active && totalCurrent > 0
+        ? pacing.recommendedDailyPool * (current / totalCurrent)
+        : undefined;
+
     // calculateRecommendations is called ONCE PER PLATFORM — never across them.
     const recs = calculateRecommendations(meta.snapshots, {
       prospectingFloor,
       z1Multiplier,
+      targetPool,
     });
     recommendations.push(...recs);
     byPlatform.push(summarise(meta.platform, recs, meta));
   }
 
-  return { recommendations, byPlatform, summary: rollup(byPlatform) };
+  return { recommendations, byPlatform, summary: rollup(byPlatform), pacing };
 }
 
 /** Whether any recommendation for this date has been applied. */
@@ -340,7 +417,11 @@ export async function getDashboardData(
 ): Promise<DashboardData> {
   const refresh = opts.refresh ?? false;
   const env = await resolveEnv();
-  const { recommendations, byPlatform, summary } = await compute(date, env, refresh);
+  const { recommendations, byPlatform, summary, pacing } = await compute(
+    date,
+    env,
+    refresh,
+  );
 
   if (refresh) await persist(date, recommendations);
 
@@ -351,6 +432,7 @@ export async function getDashboardData(
     recommendations,
     byPlatform,
     summary,
+    pacing,
     appliedToday: await appliedToday(date),
   };
 }

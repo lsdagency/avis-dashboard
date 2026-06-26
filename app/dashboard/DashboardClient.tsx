@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import type { DashboardData, UserRole } from "@/lib/types";
+import MonthlyPacingCard from "@/components/dashboard/MonthlyPacingCard";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import PlatformStatusBadges from "@/components/dashboard/PlatformStatusBadges";
 import CampaignTable from "@/components/dashboard/CampaignTable";
@@ -140,6 +141,7 @@ export default function DashboardClient({
         </div>
       )}
 
+      <MonthlyPacingCard pacing={view.pacing} />
       <SummaryCards summary={view.summary} />
       <PlatformStatusBadges byPlatform={view.byPlatform} />
       <CampaignTable recommendations={view.recommendations} />

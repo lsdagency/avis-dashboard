@@ -31,6 +31,13 @@ export interface EngineOptions {
   prospectingFloor?: number;
   /** ROAS multiplier for Z1 priority regions. Default 1.25; 1.0 = off. */
   z1Multiplier?: number;
+  /**
+   * Total daily budget to allocate today (from monthly pacing). When omitted, the
+   * pool stays equal to the current daily budgets (pure reallocation). When set,
+   * the recommendations sum to this value — guard rails still bound per-campaign
+   * moves, but an extreme pacing target overrides them so the pool is hit exactly.
+   */
+  targetPool?: number;
 }
 
 function effectiveRoas(s: CampaignSnapshot, z1Multiplier: number): number {
@@ -51,6 +58,9 @@ export function calculateRecommendations(
 
   const floor = clamp(opts.prospectingFloor ?? DEFAULT_PROSPECTING_FLOOR, 0, 0.9);
   const z1 = clamp(opts.z1Multiplier ?? DEFAULT_Z1_MULTIPLIER, 1, 2);
+  // Pacing can set the total pool for today; otherwise keep the current total.
+  const pool =
+    opts.targetPool != null && opts.targetPool >= 0 ? opts.targetPool : totalBudget;
 
   const up = snapshots.filter((s) => s.funnelStage === "PROSPECTING");
   const low = snapshots.filter((s) => s.funnelStage === "RETARGETING");
@@ -66,8 +76,8 @@ export function calculateRecommendations(
   }
   const floorTriggered =
     up.length > 0 && low.length > 0 && upShareCurrent < floor;
-  const upPool = totalBudget * upPoolShare;
-  const lowPool = totalBudget - upPool;
+  const upPool = pool * upPoolShare;
+  const lowPool = pool - upPool;
 
   // ── Within-funnel performance-anchored allocation ──
   const results: BudgetRecommendation[] = [];
@@ -92,13 +102,22 @@ export function calculateRecommendations(
     });
   }
 
-  // ── Guard rails: clamp to ±, keep the platform total constant ──
-  settle(results, totalBudget);
+  // ── Guard rails: clamp to ±, keep the pool constant ──
+  settle(results, pool);
+
+  // If the pacing target sits outside the guard-rail band (an extreme ramp or
+  // cut), settle can't reach it — scale proportionally so the pool is hit exactly.
+  // The monthly cap is a hard constraint and takes precedence over the ± rails.
+  const settled = results.reduce((a, r) => a + r.recommendedBudget, 0);
+  if (settled > 0 && Math.abs(settled - pool) > 0.01) {
+    const k = pool / settled;
+    for (const r of results) r.recommendedBudget *= k;
+  }
 
   for (const r of results) {
     r.recommendedBudget = Math.round(r.recommendedBudget * 100) / 100;
     r.recommendedWeightPct =
-      Math.round((r.recommendedBudget / totalBudget) * 10000) / 100;
+      pool > 0 ? Math.round((r.recommendedBudget / pool) * 10000) / 100 : 0;
     r.budgetDelta = Math.round((r.recommendedBudget - r.currentBudget) * 100) / 100;
   }
 

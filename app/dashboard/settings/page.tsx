@@ -3,10 +3,18 @@ import { getSession } from "@/lib/auth";
 import AppHeader from "@/components/AppHeader";
 import { CREDENTIAL_GROUPS, credentialStatus } from "@/lib/credentials";
 import { listUsers } from "@/lib/repo";
-import { getProspectingFloor, getZ1Multiplier } from "@/lib/settings";
+import {
+  getProspectingFloor,
+  getZ1Multiplier,
+  getMonthlyBudget,
+  getPacingStance,
+  getMtdOverride,
+} from "@/lib/settings";
+import { monthToDateSpend, todayInTz } from "@/lib/integrations";
 import CredentialsManager from "./CredentialsManager";
 import UserManager from "./UserManager";
 import BudgetSettings from "./BudgetSettings";
+import MonthlyPacingSettings from "./MonthlyPacingSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +23,19 @@ export default async function SettingsPage() {
   if (!session) redirect("/login");
   if (session.role !== "admin") redirect("/dashboard");
 
-  const [status, users, floor, z1] = await Promise.all([
-    credentialStatus(),
-    listUsers(),
-    getProspectingFloor(),
-    getZ1Multiplier(),
-  ]);
+  const today = todayInTz();
+  const month = today.slice(0, 7);
+  const [status, users, floor, z1, monthlyBudget, stance, override, mtdAuto] =
+    await Promise.all([
+      credentialStatus(),
+      listUsers(),
+      getProspectingFloor(),
+      getZ1Multiplier(),
+      getMonthlyBudget(),
+      getPacingStance(),
+      getMtdOverride(month),
+      monthToDateSpend(today),
+    ]);
 
   return (
     <div className="min-h-screen bg-avis-grey">
@@ -47,6 +62,22 @@ export default async function SettingsPage() {
             <BudgetSettings
               initialFloorPct={Math.round(floor * 100)}
               initialZ1={z1}
+            />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="font-display text-xl font-bold">Monthly budget &amp; pacing</h2>
+          <p className="mt-1 text-sm text-black/60">
+            Set the total monthly budget and how to pace it. Recommended daily
+            budgets are capped so the month never overspends.
+          </p>
+          <div className="mt-4">
+            <MonthlyPacingSettings
+              initialMonthlyBudget={monthlyBudget}
+              initialStance={stance}
+              initialOverride={override}
+              mtdAuto={mtdAuto}
             />
           </div>
         </section>

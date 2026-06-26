@@ -73,6 +73,25 @@ export interface PlatformApiStatus {
   error?: string;
 }
 
+// Monthly budget pacing — tracks run rate so the month never overspends.
+export interface PacingSummary {
+  active: boolean; // true once a monthly budget is set
+  monthlyBudget: number;
+  monthLabel: string; // e.g. "June 2026"
+  daysInMonth: number;
+  dayOfMonth: number;
+  daysRemaining: number; // including today
+  mtdSpend: number; // spend on completed days this month (excludes today)
+  mtdSource: "stored" | "override" | "estimated";
+  remaining: number; // monthlyBudget - mtdSpend
+  evenDailyPace: number; // remaining / daysRemaining
+  stancePct: number; // -50 (hold back) … 0 (even) … +50 (push now)
+  recommendedDailyPool: number; // today's target total spend (what recs sum to)
+  currentDailyRunRate: number; // sum of current daily budgets
+  projectedMonthEndSpend: number; // mtd + currentRunRate × daysRemaining
+  status: "ahead" | "behind" | "on_track"; // current run rate vs even pace
+}
+
 // The full payload the dashboard consumes for a given date.
 export interface DashboardData {
   date: string; // YYYY-MM-DD
@@ -81,6 +100,7 @@ export interface DashboardData {
   recommendations: BudgetRecommendation[];
   byPlatform: PlatformSummary[];
   summary: DashboardSummary;
+  pacing: PacingSummary;
   appliedToday: boolean;
 }
 

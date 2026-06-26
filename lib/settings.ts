@@ -81,3 +81,64 @@ export async function setZ1Multiplier(multiplier: number): Promise<void> {
   const n = Math.min(MAX_Z1_MULTIPLIER, Math.max(MIN_Z1_MULTIPLIER, multiplier));
   await setRaw(Z1_KEY, String(n));
 }
+
+// ── Monthly budget & pacing ──
+const MONTHLY_BUDGET_KEY = "monthly_budget";
+const PACING_STANCE_KEY = "pacing_stance"; // -50..+50 (percent vs even pace)
+const MTD_OVERRIDE_KEY = "mtd_override"; // "YYYY-MM|amount"; blank = unset
+export const MAX_PACING_STANCE = 50;
+
+/** Total monthly budget for the account (all platforms). 0 = pacing disabled. */
+export async function getMonthlyBudget(): Promise<number> {
+  const stored = await getRaw(MONTHLY_BUDGET_KEY);
+  const n =
+    stored != null && stored !== ""
+      ? Number(stored)
+      : process.env.MONTHLY_BUDGET
+        ? Number(process.env.MONTHLY_BUDGET)
+        : 0;
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export async function setMonthlyBudget(amount: number): Promise<void> {
+  await setRaw(MONTHLY_BUDGET_KEY, String(Math.max(0, amount)));
+}
+
+/** Pacing stance: -50 (hold back) … 0 (even) … +50 (push spend now). */
+export async function getPacingStance(): Promise<number> {
+  const stored = await getRaw(PACING_STANCE_KEY);
+  let n =
+    stored != null && stored !== ""
+      ? Number(stored)
+      : process.env.PACING_STANCE != null
+        ? Number(process.env.PACING_STANCE)
+        : 0;
+  if (!Number.isFinite(n)) n = 0;
+  return Math.min(MAX_PACING_STANCE, Math.max(-MAX_PACING_STANCE, n));
+}
+
+export async function setPacingStance(pct: number): Promise<void> {
+  const n = Math.min(MAX_PACING_STANCE, Math.max(-MAX_PACING_STANCE, pct));
+  await setRaw(PACING_STANCE_KEY, String(Math.round(n)));
+}
+
+/** Manual month-to-date spend override for `month` (YYYY-MM). null = use tracked spend. */
+export async function getMtdOverride(month: string): Promise<number | null> {
+  const stored = await getRaw(MTD_OVERRIDE_KEY);
+  if (!stored) return null;
+  const [m, amt] = stored.split("|");
+  if (m !== month) return null; // stale override from a previous month
+  const n = Number(amt);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+export async function setMtdOverride(
+  month: string,
+  amount: number | null,
+): Promise<void> {
+  if (amount == null || !(amount >= 0)) {
+    await setRaw(MTD_OVERRIDE_KEY, "");
+    return;
+  }
+  await setRaw(MTD_OVERRIDE_KEY, `${month}|${amount}`);
+}
