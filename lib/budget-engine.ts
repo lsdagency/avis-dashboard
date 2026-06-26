@@ -1,6 +1,6 @@
 import { Z1_REGIONS } from "./types";
 import type { BudgetRecommendation, CampaignSnapshot, FunnelStage } from "./types";
-import { DEFAULT_PROSPECTING_FLOOR } from "./settings";
+import { DEFAULT_PROSPECTING_FLOOR, DEFAULT_Z1_MULTIPLIER } from "./settings";
 
 /**
  * Performance-anchored budget reweighting. Called ONCE PER PLATFORM by the
@@ -22,7 +22,6 @@ import { DEFAULT_PROSPECTING_FLOOR } from "./settings";
  */
 
 const ROAS_FLOOR = 0.1;
-const Z1_MULTIPLIER = 1.25;
 const MAX_INCREASE_FACTOR = 2.0; // +100%
 const MIN_FACTOR = 0.5; // −50%
 const GAMMA = 1.5; // balanced tilt toward best performers
@@ -30,11 +29,13 @@ const GAMMA = 1.5; // balanced tilt toward best performers
 export interface EngineOptions {
   /** Prospecting minimum share of the pool (0–1). Default 0.5. */
   prospectingFloor?: number;
+  /** ROAS multiplier for Z1 priority regions. Default 1.25; 1.0 = off. */
+  z1Multiplier?: number;
 }
 
-function effectiveRoas(s: CampaignSnapshot): number {
+function effectiveRoas(s: CampaignSnapshot, z1Multiplier: number): number {
   const base = Math.max(s.roas, ROAS_FLOOR);
-  return base * (Z1_REGIONS.has(s.region) ? Z1_MULTIPLIER : 1.0);
+  return base * (Z1_REGIONS.has(s.region) ? z1Multiplier : 1.0);
 }
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -49,6 +50,7 @@ export function calculateRecommendations(
   if (totalBudget === 0) return [];
 
   const floor = clamp(opts.prospectingFloor ?? DEFAULT_PROSPECTING_FLOOR, 0, 0.9);
+  const z1 = clamp(opts.z1Multiplier ?? DEFAULT_Z1_MULTIPLIER, 1, 2);
 
   const up = snapshots.filter((s) => s.funnelStage === "PROSPECTING");
   const low = snapshots.filter((s) => s.funnelStage === "RETARGETING");
@@ -75,10 +77,10 @@ export function calculateRecommendations(
   ] as const) {
     if (!campaigns.length) continue;
     const avgEff =
-      campaigns.reduce((a, s) => a + effectiveRoas(s), 0) / campaigns.length || 1;
+      campaigns.reduce((a, s) => a + effectiveRoas(s, z1), 0) / campaigns.length || 1;
 
     const weights = campaigns.map((s) => {
-      const rel = avgEff > 0 ? effectiveRoas(s) / avgEff : 1;
+      const rel = avgEff > 0 ? effectiveRoas(s, z1) / avgEff : 1;
       const multiplier = clamp(Math.pow(rel, GAMMA), MIN_FACTOR, MAX_INCREASE_FACTOR);
       return s.currentBudget * multiplier;
     });

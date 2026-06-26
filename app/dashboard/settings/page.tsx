@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import AppHeader from "@/components/AppHeader";
 import { CREDENTIAL_GROUPS, credentialStatus } from "@/lib/credentials";
 import { listUsers } from "@/lib/repo";
-import { getProspectingFloor } from "@/lib/settings";
+import { getProspectingFloor, getZ1Multiplier } from "@/lib/settings";
 import CredentialsManager from "./CredentialsManager";
 import UserManager from "./UserManager";
 import BudgetSettings from "./BudgetSettings";
@@ -15,10 +15,11 @@ export default async function SettingsPage() {
   if (!session) redirect("/login");
   if (session.role !== "admin") redirect("/dashboard");
 
-  const [status, users, floor] = await Promise.all([
+  const [status, users, floor, z1] = await Promise.all([
     credentialStatus(),
     listUsers(),
     getProspectingFloor(),
+    getZ1Multiplier(),
   ]);
 
   return (
@@ -43,7 +44,10 @@ export default async function SettingsPage() {
             best-performing regions within each platform.
           </p>
           <div className="mt-4">
-            <BudgetSettings initialFloorPct={Math.round(floor * 100)} />
+            <BudgetSettings
+              initialFloorPct={Math.round(floor * 100)}
+              initialZ1={z1}
+            />
           </div>
         </section>
 

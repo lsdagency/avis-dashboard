@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db, dbAvailable, schema } from "../db";
 import { resolveEnv } from "../credentials";
 import { calculateRecommendations } from "../budget-engine";
-import { getProspectingFloor } from "../settings";
+import { getProspectingFloor, getZ1Multiplier } from "../settings";
 import {
   PLATFORMS,
   type BudgetRecommendation,
@@ -215,16 +215,20 @@ async function compute(
   byPlatform: PlatformSummary[];
   summary: DashboardSummary;
 }> {
-  const [results, prospectingFloor] = await Promise.all([
+  const [results, prospectingFloor, z1Multiplier] = await Promise.all([
     fetchAllPlatforms(date, env, refresh),
     getProspectingFloor(),
+    getZ1Multiplier(),
   ]);
   const recommendations: BudgetRecommendation[] = [];
   const byPlatform: PlatformSummary[] = [];
 
   for (const meta of results) {
     // calculateRecommendations is called ONCE PER PLATFORM — never across them.
-    const recs = calculateRecommendations(meta.snapshots, { prospectingFloor });
+    const recs = calculateRecommendations(meta.snapshots, {
+      prospectingFloor,
+      z1Multiplier,
+    });
     recommendations.push(...recs);
     byPlatform.push(summarise(meta.platform, recs, meta));
   }
