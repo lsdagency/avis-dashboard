@@ -8,3 +8,6 @@ out
 .netlify
 drizzle/meta
 tsconfig.tsbuildinfo
+
+# Office temp lock files
+~\$*
